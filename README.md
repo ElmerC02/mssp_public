@@ -1,6 +1,6 @@
 # MSSP Homelab Infrastructure — Server Setup
 
-A from-scratch build of the backend infrastructure for a two-person Managed Security Service Provider (MSSP) targeting media/production companies, legal firms, and small businesses.
+A from-scratch build of the backend infrastructure for a two-person Managed Security Service Provider (MSSP) targeting media/production companies, legal firms, and small businesses in LA.
 
 > This is a live project. Infrastructure is actively being built out.
 
@@ -24,13 +24,14 @@ This repo documents the full setup of a self-hosted MSSP backend running on a ho
 
 | Layer | Technology |
 |-------|-----------|
-| Hypervisor | Proxmox VE |
+| Hypervisor | Proxmox VE 9.1.4 |
 | Server OS | Ubuntu Server 24.04 LTS |
 | Backend | Python Flask |
-| Database | SQLite |
+| Database | SQLCipher (encrypted SQLite) |
 | Firewall | UFW |
-| Remote Access | Cloudflare Tunnel |
-| Frontend | HTML/CSS/JS |
+| Remote Access | Cloudflare Tunnel (coming soon) |
+| Auth | Cloudflare Access (coming soon) |
+| Frontend | HTML / CSS / JS (Jinja2 templates) |
 
 ---
 
@@ -80,44 +81,97 @@ Security-first approach — only necessary ports are opened.
 sudo ufw allow OpenSSH
 sudo ufw enable
 sudo ufw allow 5000
-```
-
-```bash
 sudo ufw status
 ```
 
 ---
 
-## Step 4 — Flask Backend Setup
+## Step 4 — SSH Key Authentication
+
+Password login disabled. SSH key auth only.
+
+```bash
+# Generate key on local machine
+ssh-keygen -t ed25519 -C "mssp-server" -f ~/.ssh/mssp-server
+
+# Copy key to server
+ssh-copy-id -i ~/.ssh/mssp-server.pub <user>@<server-ip>
+```
+
+Disable password login in `/etc/ssh/sshd_config`:
+```
+PasswordAuthentication no
+```
+
+```bash
+sudo systemctl restart ssh
+```
+
+---
+
+## Step 5 — Flask Backend Setup
 
 ### Create Project Structure
 ```bash
 mkdir ~/mssp && cd ~/mssp
 python3 -m venv venv
 source venv/bin/activate
-pip install flask
-mkdir templates
+pip install flask python-dotenv
+mkdir templates static/css static/js database
 ```
 
-### app.py
+### Project Structure
+```
+mssp/
+├── app.py
+├── database.py
+├── .env                    ← gitignored, holds DB encryption key
+├── templates/
+│   ├── base.html           ← shared layout (sidebar, topbar, modal)
+│   ├── overview.html
+│   ├── clients.html
+│   ├── tickets.html
+│   └── billing.html
+├── static/
+│   ├── css/main.css
+│   └── js/
+│       ├── state.js        ← shared data, runs on every page
+│       ├── ui.js           ← toast, modal helpers
+│       ├── overview.js
+│       ├── clients.js
+│       ├── tickets.js
+│       ├── billing.js
+│       └── reports.js      ← PDF health report generator
+└── database/
+    ├── schema.sql
+    └── mssp.db             ← gitignored, encrypted with SQLCipher
+```
+
+### Flask Routes (app.py)
 ```python
-from flask import Flask, render_template
-
-app = Flask(__name__)
-
-@app.route('/')
-def home():
-    return render_template('mssp_dashboard.html')
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+@app.route('/')          # Overview dashboard
+@app.route('/clients')   # Client list + detail
+@app.route('/tickets')   # Ticket management
+@app.route('/billing')   # Billing & MRR
 ```
 
 ---
 
-## Step 5 — Auto-Start Flask on Boot (systemd)
+## Step 6 — Encrypted Database (SQLCipher)
 
-Configured Flask to run as a systemd service so the dashboard survives reboots with zero manual intervention.
+```bash
+sudo apt install -y sqlcipher libsqlcipher-dev
+pip install sqlcipher3
+```
+
+Encryption key stored in `.env` (never committed to git):
+```
+DB_ENCRYPTION_KEY=<strong-passphrase>
+```
+
+---
+
+## Step 7 — Auto-Start Flask on Boot (systemd)
 
 ```ini
 [Unit]
@@ -139,6 +193,7 @@ WantedBy=multi-user.target
 sudo systemctl daemon-reload
 sudo systemctl enable mssp
 sudo systemctl start mssp
+sudo systemctl restart mssp   # apply changes after updates
 ```
 
 ---
@@ -148,46 +203,79 @@ sudo systemctl start mssp
 ```
 [ Mac / Remote Device ]
         |
-        | SSH / Cloudflare Tunnel
+        | SSH (key auth only) / Cloudflare Tunnel (coming soon)
         |
 [ Proxmox Hypervisor ]
         |
-        |-- [ mssp-server VM ] ← Flask backend + Dashboard
+        |-- [ mssp-server VM ] ← Flask + SQLCipher + Dashboard
+        |       ops.stratusitsec.com (coming soon)
+        |
         |-- [ unifi-vm ]       ← Network management
 ```
 
 ---
 
+## Domain Structure (Coming Soon)
+
+| Subdomain | Purpose |
+|-----------|---------|
+| `stratusitsec.com` | Public website |
+| `ops.stratusitsec.com` | Internal ops dashboard (this project) |
+| `client.stratusitsec.com` | Client portal |
+| `onboard.stratusitsec.com` | Client onboarding form |
+
+All subdomains will be routed through Cloudflare Tunnel with Cloudflare Access restricting access to authorized emails only.
+
+---
+
 ## Roadmap
 
-- [x] Proxmox VM created
+**Phase 1 — Foundation**
+- [x] Proxmox VM created and configured
 - [x] Ubuntu Server 24.04 LTS installed
-- [x] SSH enabled and secured
+- [x] SSH key authentication (password login disabled)
 - [x] Firewall configured (UFW)
-- [x] Flask backend running
-- [x] MSSP dashboard served via Flask
-- [x] Flask auto-starts on boot
-- [ ] Cloudflare Tunnel for remote access
-- [ ] SQLite database integration
+- [x] Flask backend running with 4 routes
+- [x] Multi-page dashboard (Overview, Clients, Tickets, Billing)
+- [x] PDF health report generator
+- [x] Encrypted database (SQLCipher)
+- [x] Flask auto-starts on boot (systemd)
+- [ ] Purchase domain (stratusitsec.com)
+- [ ] Cloudflare Tunnel → ops.stratusitsec.com
+- [ ] Cloudflare Access (restrict to 2 emails)
+- [ ] GitHub Actions CI/CD (auto-deploy on push)
+
+**Phase 2 — Backend**
+- [ ] Wire Flask routes to SQLCipher database
+- [ ] Client data persists across sessions
+- [ ] Tickets and billing data persists
+
+**Phase 3 — Tools**
 - [ ] Invoice generator
-- [ ] TPN compliance checker
 - [ ] SOW generator
-- [ ] Client onboarding portal
-- [ ] Offboarding automation script
+- [ ] TPN compliance checker
+- [ ] Automated backups (cron job)
 - [ ] SLA timer
+
+**Phase 4 — Client Portal**
+- [ ] client.stratusitsec.com
+- [ ] onboard.stratusitsec.com
 
 ---
 
 ## Skills Demonstrated
 
-- Linux server administration (Ubuntu Server)
-- Virtualization (Proxmox)
-- Python backend development (Flask)
+- Linux server administration (Ubuntu Server 24.04)
+- Virtualization (Proxmox VE)
+- Python backend development (Flask, Jinja2)
+- Database encryption (SQLCipher)
 - Firewall configuration (UFW)
+- SSH hardening (key auth, password login disabled)
 - Service management (systemd)
 - Security-first infrastructure design
 - Self-hosted architecture (no cloud dependency)
-- Cloudflare Tunnel (remote access without port forwarding)
+- Cloudflare Tunnel + Access (remote access without port forwarding)
+- CI/CD pipeline (GitHub Actions — coming soon)
 
 ---
 
