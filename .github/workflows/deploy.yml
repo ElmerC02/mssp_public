@@ -1,0 +1,32 @@
+name: Deploy MSSP Dashboard
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install cloudflared
+        run: |
+          curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o cloudflared
+          chmod +x cloudflared
+          sudo mv cloudflared /usr/local/bin/
+
+      - name: Deploy to server via Cloudflare Tunnel
+        uses: appleboy/ssh-action@master
+        with:
+          host: ssh.stratusitsec.com
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          proxy_host: ssh.stratusitsec.com
+          proxy_port: 22
+          script: |
+            cd ~/mssp
+            git pull origin main
+            source venv/bin/activate
+            pip install -r requirements.txt -q
+            sudo systemctl restart mssp
+            echo "Deployed successfully at $(date)"
