@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Tickets{% endblock %}
+{% block page_title %}Tickets{% endblock %}
+
+{% block topbar_actions %}
+  <button class="btn btn-primary" onclick="openNewTicket()">+ New Ticket</button>
+{% endblock %}
+
+{% block content %}
+<div class="section-header">
+  <div>
+    <div class="section-title">Tickets</div>
+    <div class="section-sub">Track and resolve client issues</div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="filterTickets('all', this)">All</button>
+  <button class="tab" onclick="filterTickets('open', this)">Open</button>
+  <button class="tab" onclick="filterTickets('in-progress', this)">In Progress</button>
+  <button class="tab" onclick="filterTickets('resolved', this)">Resolved</button>
+</div>
+
+<div class="card" style="padding:0">
+  <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-bottom:1px solid var(--border);font-size:11px;color:var(--dim)">
+    <span style="width:52px">ID</span>
+    <span style="flex:1">Title</span>
+    <span style="width:120px">Client</span>
+    <span style="width:60px">Priority</span>
+    <span style="width:72px">Status</span>
+  </div>
+  <div id="ticket-list"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/tickets.js"></script>
+{% endblock %}

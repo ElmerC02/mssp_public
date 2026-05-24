@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Billing{% endblock %}
+{% block page_title %}Billing{% endblock %}
+
+{% block content %}
+<div class="section-header">
+  <div>
+    <div class="section-title">Billing</div>
+    <div class="section-sub">Retainer payments and invoice tracking</div>
+  </div>
+</div>
+
+<div class="metrics" style="grid-template-columns:repeat(3,1fr)">
+  <div class="metric metric-green">
+    <div class="metric-label">Monthly Recurring Revenue</div>
+    <div class="metric-value" id="billing-mrr">—</div>
+    <div class="metric-sub">active retainers</div>
+  </div>
+  <div class="metric metric-yellow">
+    <div class="metric-label">Outstanding</div>
+    <div class="metric-value">$0</div>
+    <div class="metric-sub">all current</div>
+  </div>
+  <div class="metric metric-blue">
+    <div class="metric-label">YTD Revenue</div>
+    <div class="metric-value" id="billing-ytd">—</div>
+    <div class="metric-sub" id="billing-ytd-sub">loading...</div>
+  </div>
+</div>
+
+<div class="card" style="padding:0">
+  <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-bottom:1px solid var(--border);font-size:11px;color:var(--dim)">
+    <span style="flex:1">Client</span>
+    <span style="width:100px">Plan</span>
+    <span style="width:80px;text-align:right">Amount</span>
+    <span style="width:70px;text-align:center">Status</span>
+    <span style="width:90px;text-align:right">Next Due</span>
+  </div>
+  <div id="billing-list"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/billing.js"></script>
+{% endblock %}

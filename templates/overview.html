@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Overview{% endblock %}
+{% block page_title %}Overview{% endblock %}
+
+{% block topbar_actions %}
+  <button class="btn" onclick="openModal()">+ Add Client</button>
+  <a href="/clients" class="btn btn-primary">Manage Clients</a>
+{% endblock %}
+
+{% block content %}
+<div class="metrics">
+  <div class="metric metric-green">
+    <div class="metric-label">Active Clients</div>
+    <div class="metric-value" id="stat-clients">—</div>
+    <div class="metric-sub" id="stat-clients-sub">loading...</div>
+  </div>
+  <div class="metric metric-blue">
+    <div class="metric-label">Monthly Recurring</div>
+    <div class="metric-value" id="stat-mrr">—</div>
+    <div class="metric-sub">retainers only</div>
+  </div>
+  <div class="metric metric-yellow">
+    <div class="metric-label">Open Tickets</div>
+    <div class="metric-value" id="stat-tickets">—</div>
+    <div class="metric-sub" id="stat-tickets-sub">loading...</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Avg Health Score</div>
+    <div class="metric-value" id="stat-health">—</div>
+    <div class="metric-sub">across all clients</div>
+  </div>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Client Health</div>
+      <a href="/clients" class="card-action">View all →</a>
+    </div>
+    <div id="overview-client-list"></div>
+  </div>
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Recent Tickets</div>
+      <a href="/tickets" class="card-action">View all →</a>
+    </div>
+    <div id="overview-tickets"></div>
+  </div>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Billing Status</div>
+      <a href="/billing" class="card-action">View all →</a>
+    </div>
+    <div id="overview-billing"></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">Quick Actions</div></div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <a href="/tickets" class="btn btn-green" style="width:100%;padding:10px;font-size:13px;text-align:center;text-decoration:none">+ New Ticket</a>
+      <button class="btn" style="width:100%;padding:10px;font-size:13px" onclick="openModal()">+ Add Client</button>
+      <button class="btn" style="width:100%;padding:10px;font-size:13px" onclick="generateAllReports()">⬇ Generate All Reports</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/reports.js"></script>
+<script src="/static/js/overview.js"></script>
+{% endblock %}

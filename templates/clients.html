@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Clients{% endblock %}
+{% block page_title %}Clients{% endblock %}
+
+{% block topbar_actions %}
+  <button class="btn" onclick="openModal()">+ Add Client</button>
+{% endblock %}
+
+{% block content %}
+
+<!-- CLIENT LIST (default view) -->
+<div id="view-clients">
+  <div class="section-header">
+    <div>
+      <div class="section-title">Clients</div>
+      <div class="section-sub">Manage all client accounts and health data</div>
+    </div>
+    <button class="btn btn-primary" onclick="openModal()">+ Add Client</button>
+  </div>
+  <div class="card" style="padding:0">
+    <div id="client-list-full"></div>
+  </div>
+</div>
+
+<!-- CLIENT DETAIL (shown when a client is selected) -->
+<div id="view-client-detail" style="display:none">
+  <div class="section-header">
+    <div>
+      <button class="btn" onclick="showClientList()" style="margin-bottom:8px">← Back to Clients</button>
+      <div class="section-title" id="detail-client-name"></div>
+      <div class="section-sub" id="detail-client-meta"></div>
+    </div>
+  </div>
+  <div id="client-detail-content"></div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/reports.js"></script>
+<script src="/static/js/clients.js"></script>
+{% endblock %}

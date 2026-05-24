@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}MSSP Ops{% endblock %} — Stratus IT Sec</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link rel="stylesheet" href="/static/css/main.css">
+  {% block head %}{% endblock %}
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark"><span>S</span></div>
+    <div>
+      <div class="logo-name">Stratus IT Sec</div>
+      <div class="logo-sub">Ops Center</div>
+    </div>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-section">Main</div>
+    <a class="nav-item {% if active_page == 'overview' %}active{% endif %}" href="/">
+      <span>⬡</span> Overview
+    </a>
+    <a class="nav-item {% if active_page == 'clients' %}active{% endif %}" href="/clients">
+      <span>◻</span> Clients
+    </a>
+    <a class="nav-item {% if active_page == 'tickets' %}active{% endif %}" href="/tickets">
+      <span>◈</span> Tickets
+      <span class="badge" id="open-ticket-count">—</span>
+    </a>
+    <a class="nav-item {% if active_page == 'billing' %}active{% endif %}" href="/billing">
+      <span>◇</span> Billing
+    </a>
+    <div class="nav-section">Clients</div>
+    <div id="client-nav-list"></div>
+  </div>
+  <div class="sidebar-bottom">
+    <div class="user-chip">
+      <div class="user-avatar">SA</div>
+      <div class="user-info">
+        <div class="user-name">Stratus Admin</div>
+        <div class="user-role">Security Lead</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title">{% block page_title %}Dashboard{% endblock %}</div>
+    <div class="topbar-actions">
+      {% block topbar_actions %}{% endblock %}
+    </div>
+  </div>
+  <div class="content">
+    {% block content %}{% endblock %}
+  </div>
+</div>
+
+<!-- ADD CLIENT MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Add New Client</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group form-full">
+        <label class="form-label">Company Name</label>
+        <input class="form-input" id="new-company" placeholder="Acme Productions">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Contact Name</label>
+        <input class="form-input" id="new-contact" placeholder="John Smith">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-input" id="new-email" placeholder="john@acme.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Service Plan</label>
+        <select class="form-input" id="new-plan">
+          <option value="Starter">Starter — $500/mo</option>
+          <option value="Professional" selected>Professional — $2,500/mo</option>
+          <option value="Enterprise">Enterprise — Custom</option>
+          <option value="Residential">Residential — $750/mo</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Monthly Retainer ($)</label>
+        <input class="form-input" id="new-retainer" placeholder="2500" type="number">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Users</label>
+        <input class="form-input" id="new-users" placeholder="25" type="number">
+      </div>
+      <div class="form-group form-full">
+        <label class="form-label">Industry</label>
+        <select class="form-input" id="new-industry">
+          <option>Media & Production</option>
+          <option>Legal</option>
+          <option>Financial Services</option>
+          <option>Tech Startup</option>
+          <option>Residential</option>
+          <option>Other</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:1rem">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="addClient()">Add Client</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- SHARED JS -->
+<script src="/static/js/state.js"></script>
+<script src="/static/js/ui.js"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>
