@@ -15,10 +15,11 @@ def add_security_headers(response):
     response.headers.setdefault(
         'Content-Security-Policy',
         "default-src 'self'; "
-        "script-src 'self' https://cdnjs.cloudflare.com; "
+        "script-src 'self' https://cdnjs.cloudflare.com https://static.cloudflareinsights.com; "
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
         "font-src https://fonts.gstatic.com; "
         "img-src 'self' data:; "
+        "connect-src 'self' https://cdnjs.cloudflare.com; "
         "object-src 'none'; "
         "base-uri 'self'; "
         "frame-ancestors 'none'; "
