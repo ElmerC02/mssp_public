@@ -29,6 +29,13 @@ jobs:
             IdentityFile ~/.ssh/id_ed25519
           EOF
 
+      - name: Debug key
+        run: |
+          wc -l ~/.ssh/id_ed25519
+          head -1 ~/.ssh/id_ed25519
+          tail -1 ~/.ssh/id_ed25519
+          ssh-keygen -l -f ~/.ssh/id_ed25519
+
       - name: Deploy
         run: |
           ssh mssp-admin@ssh.stratusitsec.com "cd ~/mssp && git pull origin main && source venv/bin/activate && pip install -r requirements.txt -q && sudo systemctl restart mssp && echo 'Deployed at $(date)'"
