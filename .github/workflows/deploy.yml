@@ -1,4 +1,4 @@
-kname: Deploy MSSP Dashboard
+name: Deploy MSSP Dashboard
 
 on:
   push:
