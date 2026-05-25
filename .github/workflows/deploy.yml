@@ -22,6 +22,8 @@ jobs:
         env:
           SSH_PRIVATE_KEY_B64: ${{ secrets.SSH_PRIVATE_KEY }}
           SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+          CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
         run: |
           set -eu
           if [ -z "$SSH_PRIVATE_KEY_B64" ]; then
@@ -32,6 +34,14 @@ jobs:
             echo "Missing SSH_KNOWN_HOSTS secret"
             exit 1
           fi
+          if [ -z "$CF_ACCESS_CLIENT_ID" ]; then
+            echo "Missing CF_ACCESS_CLIENT_ID secret"
+            exit 1
+          fi
+          if [ -z "$CF_ACCESS_CLIENT_SECRET" ]; then
+            echo "Missing CF_ACCESS_CLIENT_SECRET secret"
+            exit 1
+          fi
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
           printf '%s' "$SSH_PRIVATE_KEY_B64" | base64 -d > ~/.ssh/id_ed25519
@@ -40,13 +50,13 @@ jobs:
           chmod 600 ~/.ssh/known_hosts
           cat >> ~/.ssh/config <<'EOF'
           Host ssh.stratusitsec.com
-            ProxyCommand /usr/local/bin/cloudflared access ssh --hostname %h
+            ProxyCommand /usr/local/bin/cloudflared access ssh --hostname %h --id $CF_ACCESS_CLIENT_ID --secret $CF_ACCESS_CLIENT_SECRET
             StrictHostKeyChecking yes
             UserKnownHostsFile ~/.ssh/known_hosts
             IdentitiesOnly yes
             IdentityFile ~/.ssh/id_ed25519
           EOF
-          
+
       - name: Deploy
         run: |
           ssh mssp-admin@ssh.stratusitsec.com "set -eu; cd ~/mssp && git pull --ff-only origin main && . venv/bin/activate && python -m pip install -r requirements.txt -q && sudo systemctl restart mssp && echo 'Deployed at $(date)'"
