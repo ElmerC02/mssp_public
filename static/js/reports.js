@@ -111,7 +111,7 @@ function generateReport(clientId) {
   doc.text('Stratus IT Sec · Confidential', 14, pageH - 5);
   doc.text(`Generated ${now.toLocaleDateString()}`, W - 14, pageH - 5, { align: 'right' });
 
-  const fname = c.name.replace(/\s+/g, '_') + '_' + now.toLocaleString('default', { month: 'short' }) + now.getFullYear() + '_Report.pdf';
+  const fname = safeFileName(c.name) + '_' + now.toLocaleString('default', { month: 'short' }) + now.getFullYear() + '_Report.pdf';
   doc.save(fname);
   showToast('Report downloaded: ' + fname);
 }

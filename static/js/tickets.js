@@ -10,11 +10,11 @@ function renderTickets() {
     : filtered.map(t => {
         const c = getClient(t.client);
         return `<div class="ticket-row">
-          <div class="ticket-id">${t.id}</div>
-          <div class="ticket-title">${t.title}</div>
-          <div class="ticket-client">${c ? c.name : '—'}</div>
-          <div class="ticket-pri ${priClass(t.priority)}">${t.priority}</div>
-          <div class="ticket-status ${t.status === 'open' ? 'status-open' : t.status === 'in-progress' ? 'status-progress' : 'status-resolved'}">${t.status}</div>
+          <div class="ticket-id">${escapeHtml(t.id)}</div>
+          <div class="ticket-title">${escapeHtml(t.title)}</div>
+          <div class="ticket-client">${c ? escapeHtml(c.name) : '—'}</div>
+          <div class="ticket-pri ${priClass(t.priority)}">${escapeHtml(t.priority)}</div>
+          <div class="ticket-status ${t.status === 'open' ? 'status-open' : t.status === 'in-progress' ? 'status-progress' : 'status-resolved'}">${escapeHtml(t.status)}</div>
         </div>`;
       }).join('');
 }
@@ -44,4 +44,9 @@ function openNewTicket() {
 }
 
 // ── Init ──────────────────────────────────────────────────
+document.getElementById('new-ticket-button')?.addEventListener('click', openNewTicket);
+document.querySelectorAll('[data-ticket-filter]').forEach(button => {
+  button.addEventListener('click', () => filterTickets(button.dataset.ticketFilter, button));
+});
+
 renderTickets();

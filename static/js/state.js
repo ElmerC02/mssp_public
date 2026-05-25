@@ -16,6 +16,52 @@ const PLAN_AMOUNTS = {
   'Residential': 750
 };
 
+function escapeHtml(value) {
+  const el = document.createElement('div');
+  el.textContent = value == null ? '' : String(value);
+  return el.innerHTML;
+}
+
+function escapeAttr(value) {
+  return escapeHtml(value).replace(/`/g, '&#96;');
+}
+
+function encodeQueryValue(value) {
+  return encodeURIComponent(value == null ? '' : String(value));
+}
+
+function clientInitials(name) {
+  const initials = String(name || '')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map(word => word[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+  return initials || 'NA';
+}
+
+function planColor(plan) {
+  return PLAN_COLORS[plan] || '#888888';
+}
+
+function toNumber(value, fallback = 0) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : fallback;
+}
+
+function formatMoney(value) {
+  return '$' + toNumber(value).toLocaleString();
+}
+
+function safeFileName(value) {
+  return String(value || 'client')
+    .replace(/[^\w.-]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 80) || 'client';
+}
+
 let state = {
   clients: [
     {
@@ -77,7 +123,10 @@ let state = {
 
 // ── Shared Helpers ────────────────────────────────────────
 function getClient(id) { return state.clients.find(c => c.id === id); }
-function scoreColor(s) { return s >= 90 ? 'var(--green)' : s >= 75 ? 'var(--yellow)' : 'var(--red)'; }
+function scoreColor(s) {
+  const score = toNumber(s);
+  return score >= 90 ? 'var(--green)' : score >= 75 ? 'var(--yellow)' : 'var(--red)';
+}
 function priClass(p) {
   return p === 'critical' ? 'pri-critical' : p === 'high' ? 'pri-high' : p === 'standard' ? 'pri-standard' : 'pri-low';
 }
@@ -87,9 +136,9 @@ function renderClientNav() {
   const el = document.getElementById('client-nav-list');
   if (!el) return;
   el.innerHTML = state.clients.map(c => `
-    <a class="client-item" href="/clients?id=${c.id}">
+    <a class="client-item" href="/clients?id=${encodeQueryValue(c.id)}">
       <div class="client-dot" style="background:${scoreColor(c.health)}"></div>
-      <div class="client-name">${c.name}</div>
+      <div class="client-name">${escapeHtml(c.name)}</div>
     </a>`).join('');
 }
 

@@ -3,7 +3,7 @@
 {% block page_title %}Overview{% endblock %}
 
 {% block topbar_actions %}
-  <button class="btn" onclick="openModal()">+ Add Client</button>
+  <button class="btn" data-action="open-client-modal">+ Add Client</button>
   <a href="/clients" class="btn btn-primary">Manage Clients</a>
 {% endblock %}
 
@@ -60,8 +60,8 @@
     <div class="card-header"><div class="card-title">Quick Actions</div></div>
     <div style="display:flex;flex-direction:column;gap:8px">
       <a href="/tickets" class="btn btn-green" style="width:100%;padding:10px;font-size:13px;text-align:center;text-decoration:none">+ New Ticket</a>
-      <button class="btn" style="width:100%;padding:10px;font-size:13px" onclick="openModal()">+ Add Client</button>
-      <button class="btn" style="width:100%;padding:10px;font-size:13px" onclick="generateAllReports()">⬇ Generate All Reports</button>
+      <button class="btn" style="width:100%;padding:10px;font-size:13px" data-action="open-client-modal">+ Add Client</button>
+      <button class="btn" style="width:100%;padding:10px;font-size:13px" data-action="generate-all-reports">⬇ Generate All Reports</button>
     </div>
   </div>
 </div>

@@ -3,7 +3,7 @@
 {% block page_title %}Tickets{% endblock %}
 
 {% block topbar_actions %}
-  <button class="btn btn-primary" onclick="openNewTicket()">+ New Ticket</button>
+  <button class="btn btn-primary" id="new-ticket-button">+ New Ticket</button>
 {% endblock %}
 
 {% block content %}
@@ -15,10 +15,10 @@
 </div>
 
 <div class="tabs">
-  <button class="tab active" onclick="filterTickets('all', this)">All</button>
-  <button class="tab" onclick="filterTickets('open', this)">Open</button>
-  <button class="tab" onclick="filterTickets('in-progress', this)">In Progress</button>
-  <button class="tab" onclick="filterTickets('resolved', this)">Resolved</button>
+  <button class="tab active" data-ticket-filter="all">All</button>
+  <button class="tab" data-ticket-filter="open">Open</button>
+  <button class="tab" data-ticket-filter="in-progress">In Progress</button>
+  <button class="tab" data-ticket-filter="resolved">Resolved</button>
 </div>
 
 <div class="card" style="padding:0">

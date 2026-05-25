@@ -3,7 +3,7 @@
 {% block page_title %}Clients{% endblock %}
 
 {% block topbar_actions %}
-  <button class="btn" onclick="openModal()">+ Add Client</button>
+  <button class="btn" data-action="open-client-modal">+ Add Client</button>
 {% endblock %}
 
 {% block content %}
@@ -15,7 +15,7 @@
       <div class="section-title">Clients</div>
       <div class="section-sub">Manage all client accounts and health data</div>
     </div>
-    <button class="btn btn-primary" onclick="openModal()">+ Add Client</button>
+    <button class="btn btn-primary" data-action="open-client-modal">+ Add Client</button>
   </div>
   <div class="card" style="padding:0">
     <div id="client-list-full"></div>
@@ -26,7 +26,7 @@
 <div id="view-client-detail" style="display:none">
   <div class="section-header">
     <div>
-      <button class="btn" onclick="showClientList()" style="margin-bottom:8px">← Back to Clients</button>
+      <button class="btn" id="back-to-clients" style="margin-bottom:8px">← Back to Clients</button>
       <div class="section-title" id="detail-client-name"></div>
       <div class="section-sub" id="detail-client-meta"></div>
     </div>

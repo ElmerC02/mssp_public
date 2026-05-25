@@ -77,12 +77,11 @@ sudo apt install -y python3 python3-pip python3-venv git curl wget ufw
 
 ## Step 3 — Firewall Configuration (UFW)
 
-Security-first approach — only necessary ports are opened.
+Security-first approach — no Flask port is opened to the public internet. Cloudflare Tunnel connects outbound to the local Gunicorn service.
 
 ```bash
 sudo ufw allow OpenSSH
 sudo ufw enable
-sudo ufw allow 5000
 sudo ufw status
 ```
 
@@ -171,6 +170,12 @@ Encryption key stored in `.env` (never committed to git):
 DB_ENCRYPTION_KEY=<strong-passphrase>
 ```
 
+Generate a strong local key and lock down the file:
+```bash
+openssl rand -base64 48
+chmod 600 .env
+```
+
 ---
 
 ## Step 7 — Production Server (Gunicorn)
@@ -196,7 +201,7 @@ After=network.target
 User=<server-user>
 WorkingDirectory=/home/<server-user>/mssp
 Environment="PATH=/home/<server-user>/mssp/venv/bin"
-ExecStart=/home/<server-user>/mssp/venv/bin/gunicorn --workers 4 --bind 0.0.0.0:5000 app:app
+ExecStart=/home/<server-user>/mssp/venv/bin/gunicorn --workers 4 --bind 127.0.0.1:5000 app:app
 Restart=always
 
 [Install]
@@ -239,6 +244,12 @@ Live on ops.stratusitsec.com in seconds
 ```
 
 Uses a base64-encoded SSH key stored as a GitHub secret. Cloudflare Tunnel handles the SSH routing — no open ports on the router.
+
+Required GitHub Actions secrets:
+- `SSH_PRIVATE_KEY`: base64-encoded private deploy key
+- `SSH_KNOWN_HOSTS`: trusted host key entry for `ssh.stratusitsec.com`
+
+Host key checking stays enabled in CI so deploys fail closed if the SSH endpoint identity changes unexpectedly.
 
 ---
 
@@ -325,10 +336,12 @@ Uses a base64-encoded SSH key stored as a GitHub secret. Cloudflare Tunnel handl
 | SSH key auth | ✅ Enabled |
 | Firewall (UFW) | ✅ Configured |
 | Home IP exposed | ❌ Never |
+| Flask direct public exposure | ❌ Bound to localhost behind tunnel |
 | Database encryption | ✅ SQLCipher |
 | Secrets in git | ❌ Never (.gitignore) |
 | Remote access auth | ✅ Cloudflare Access |
 | SSH access auth | ✅ Cloudflare Access |
+| CI SSH host key checking | ✅ Enabled |
 | Email spoofing protection | ✅ SPF + DMARC |
 | DKIM | ⏳ Pending |
 | Automated backups | ⏳ Pending |
