@@ -26,12 +26,14 @@ This repo documents the full setup of a self-hosted MSSP backend running on a ho
 |-------|-----------|
 | Hypervisor | Proxmox VE 9.1.4 |
 | Server OS | Ubuntu Server 24.04 LTS |
-| Backend | Python Flask |
+| Backend | Python Flask + Gunicorn (4 workers) |
 | Database | SQLCipher (encrypted SQLite) |
 | Firewall | UFW |
-| Remote Access | Cloudflare Tunnel (coming soon) |
-| Auth | Cloudflare Access (coming soon) |
+| Remote Access | Cloudflare Tunnel |
+| Auth | Cloudflare Access (email verification) |
+| SSH Access | Cloudflare Tunnel (SSH over Zero Trust) |
 | Frontend | HTML / CSS / JS (Jinja2 templates) |
+| CI/CD | GitHub Actions (auto-deploy on push) |
 
 ---
 
@@ -116,7 +118,7 @@ sudo systemctl restart ssh
 mkdir ~/mssp && cd ~/mssp
 python3 -m venv venv
 source venv/bin/activate
-pip install flask python-dotenv
+pip install flask python-dotenv gunicorn
 mkdir templates static/css static/js database
 ```
 
@@ -171,7 +173,19 @@ DB_ENCRYPTION_KEY=<strong-passphrase>
 
 ---
 
-## Step 7 — Auto-Start Flask on Boot (systemd)
+## Step 7 — Production Server (Gunicorn)
+
+Replaced Flask development server with Gunicorn for production use.
+
+```bash
+pip install gunicorn
+```
+
+Runs 4 worker processes to handle concurrent requests.
+
+---
+
+## Step 8 — Auto-Start on Boot (systemd)
 
 ```ini
 [Unit]
@@ -182,7 +196,7 @@ After=network.target
 User=<server-user>
 WorkingDirectory=/home/<server-user>/mssp
 Environment="PATH=/home/<server-user>/mssp/venv/bin"
-ExecStart=/home/<server-user>/mssp/venv/bin/python3 app.py
+ExecStart=/home/<server-user>/mssp/venv/bin/gunicorn --workers 4 --bind 0.0.0.0:5000 app:app
 Restart=always
 
 [Install]
@@ -193,8 +207,38 @@ WantedBy=multi-user.target
 sudo systemctl daemon-reload
 sudo systemctl enable mssp
 sudo systemctl start mssp
-sudo systemctl restart mssp   # apply changes after updates
 ```
+
+---
+
+## Step 9 — Cloudflare Tunnel + Access
+
+Remote access without exposing home IP or opening router ports.
+
+- Tunnel routes `ops.stratusitsec.com` → `localhost:5000`
+- Cloudflare Access restricts access to authorized emails only
+- SSH tunnel at `ssh.stratusitsec.com` also protected by Cloudflare Access
+- Home IP is never exposed to the internet
+
+---
+
+## Step 10 — CI/CD Pipeline (GitHub Actions)
+
+Auto-deploys to the homelab server on every push to `main`.
+
+```
+Push to GitHub
+      ↓
+GitHub Actions triggers
+      ↓
+SSHes into server via Cloudflare Tunnel
+      ↓
+Pulls new code + restarts Gunicorn
+      ↓
+Live on ops.stratusitsec.com in seconds
+```
+
+Uses a base64-encoded SSH key stored as a GitHub secret. Cloudflare Tunnel handles the SSH routing — no open ports on the router.
 
 ---
 
@@ -203,28 +247,31 @@ sudo systemctl restart mssp   # apply changes after updates
 ```
 [ Mac / Remote Device ]
         |
-        | SSH (key auth only) / Cloudflare Tunnel (coming soon)
+        | Cloudflare Access (email verification)
+        |
+[ Cloudflare Network ]
+        |
+        |-- ops.stratusitsec.com → Cloudflare Tunnel → Gunicorn:5000
+        |-- ssh.stratusitsec.com → Cloudflare Tunnel → SSH:22
         |
 [ Proxmox Hypervisor ]
         |
-        |-- [ mssp-server VM ] ← Flask + SQLCipher + Dashboard
-        |       ops.stratusitsec.com (coming soon)
+        |-- [ mssp-server VM ] ← Gunicorn + Flask + SQLCipher
         |
         |-- [ unifi-vm ]       ← Network management
 ```
 
 ---
 
-## Domain Structure (Coming Soon)
+## Domain Structure
 
-| Subdomain | Purpose |
-|-----------|---------|
-| `stratusitsec.com` | Public website |
-| `ops.stratusitsec.com` | Internal ops dashboard (this project) |
-| `client.stratusitsec.com` | Client portal |
-| `onboard.stratusitsec.com` | Client onboarding form |
-
-All subdomains will be routed through Cloudflare Tunnel with Cloudflare Access restricting access to authorized emails only.
+| Subdomain | Purpose | Status |
+|-----------|---------|--------|
+| `stratusitsec.com` | Public website | Planned |
+| `ops.stratusitsec.com` | Internal ops dashboard | ✅ Live |
+| `ssh.stratusitsec.com` | Secure SSH access | ✅ Live |
+| `client.stratusitsec.com` | Client portal | Planned |
+| `onboard.stratusitsec.com` | Client onboarding form | Planned |
 
 ---
 
@@ -239,23 +286,30 @@ All subdomains will be routed through Cloudflare Tunnel with Cloudflare Access r
 - [x] Multi-page dashboard (Overview, Clients, Tickets, Billing)
 - [x] PDF health report generator
 - [x] Encrypted database (SQLCipher)
-- [x] Flask auto-starts on boot (systemd)
-- [ ] Purchase domain (stratusitsec.com)
-- [ ] Cloudflare Tunnel → ops.stratusitsec.com
-- [ ] Cloudflare Access (restrict to 2 emails)
-- [ ] GitHub Actions CI/CD (auto-deploy on push)
+- [x] Auto-starts on boot (systemd)
+- [x] Gunicorn production server (4 workers)
+- [x] Domain purchased (stratusitsec.com)
+- [x] DNS managed by Cloudflare
+- [x] Cloudflare Tunnel → ops.stratusitsec.com
+- [x] Cloudflare Access (email verification)
+- [x] SSH tunnel via Cloudflare Zero Trust
+- [x] GitHub Actions CI/CD (auto-deploy on push)
+- [x] SPF + DMARC email security records
+- [ ] DKIM email authentication (pending Google 72hr window)
+- [ ] Automated backups to AWS S3
 
 **Phase 2 — Backend**
 - [ ] Wire Flask routes to SQLCipher database
 - [ ] Client data persists across sessions
 - [ ] Tickets and billing data persists
+- [ ] Zoho CRM integration via webhook
 
 **Phase 3 — Tools**
 - [ ] Invoice generator
 - [ ] SOW generator
 - [ ] TPN compliance checker
-- [ ] Automated backups (cron job)
 - [ ] SLA timer
+- [ ] Rate limiting on Flask
 
 **Phase 4 — Client Portal**
 - [ ] client.stratusitsec.com
@@ -263,19 +317,39 @@ All subdomains will be routed through Cloudflare Tunnel with Cloudflare Access r
 
 ---
 
+## Security Posture
+
+| Control | Status |
+|---------|--------|
+| SSH password auth | ❌ Disabled |
+| SSH key auth | ✅ Enabled |
+| Firewall (UFW) | ✅ Configured |
+| Home IP exposed | ❌ Never |
+| Database encryption | ✅ SQLCipher |
+| Secrets in git | ❌ Never (.gitignore) |
+| Remote access auth | ✅ Cloudflare Access |
+| SSH access auth | ✅ Cloudflare Access |
+| Email spoofing protection | ✅ SPF + DMARC |
+| DKIM | ⏳ Pending |
+| Automated backups | ⏳ Pending |
+
+---
+
 ## Skills Demonstrated
 
 - Linux server administration (Ubuntu Server 24.04)
 - Virtualization (Proxmox VE)
-- Python backend development (Flask, Jinja2)
+- Python backend development (Flask, Jinja2, Gunicorn)
 - Database encryption (SQLCipher)
 - Firewall configuration (UFW)
 - SSH hardening (key auth, password login disabled)
 - Service management (systemd)
+- Zero Trust network architecture (Cloudflare Tunnel + Access)
+- CI/CD pipeline (GitHub Actions + Cloudflare SSH Tunnel)
+- DNS management (Cloudflare)
+- Email security (SPF, DMARC)
 - Security-first infrastructure design
 - Self-hosted architecture (no cloud dependency)
-- Cloudflare Tunnel + Access (remote access without port forwarding)
-- CI/CD pipeline (GitHub Actions — coming soon)
 
 ---
 
